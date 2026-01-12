@@ -8,6 +8,8 @@
  * - POST /api/rooms              - Nieuwe kamer aanmaken
  * - PUT  /api/rooms/:id          - Kamer bijwerken
  * - DELETE /api/rooms/:id        - Kamer verwijderen
+ * - GET  /api/devices            - Alle devices (optioneel: ?unassigned=1)
+ * - PUT  /api/devices/:dev_eui/room - Device aan kamer koppelen/ontkoppelen
  * - GET  /api/measurements       - Historische metingen (met filters)
  * - POST /api/webhook/ttn        - TTN Webhook ontvanger
  */
@@ -230,6 +232,79 @@ app.delete('/api/rooms/:id', async (req, res) => {
 });
 
 // ============================================
+// API ROUTES - DEVICES
+// ============================================
+
+// GET /api/devices - Alle devices ophalen (optioneel: ?unassigned=1 voor alleen niet-gekoppelde)
+app.get('/api/devices', async (req, res) => {
+    try {
+        const { unassigned } = req.query;
+
+        let query = `
+            SELECT d.dev_eui, d.name, d.room_id, d.last_seen_at, r.name as room_name
+            FROM devices d
+            LEFT JOIN rooms r ON d.room_id = r.room_id
+        `;
+
+        if (unassigned === '1') {
+            query += ' WHERE d.room_id IS NULL';
+        }
+
+        query += ' ORDER BY d.name';
+
+        const [devices] = await pool.query(query);
+        res.json(devices);
+    } catch (error) {
+        console.error('Error fetching devices:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// PUT /api/devices/:dev_eui/room - Device aan kamer koppelen of ontkoppelen
+app.put('/api/devices/:dev_eui/room', async (req, res) => {
+    try {
+        const devEui = req.params.dev_eui;
+        const { room_id } = req.body;
+
+        // Check of device bestaat
+        const [existingDevice] = await pool.query(
+            'SELECT dev_eui FROM devices WHERE dev_eui = ?',
+            [devEui]
+        );
+
+        if (existingDevice.length === 0) {
+            return res.status(404).json({ error: 'Device not found' });
+        }
+
+        // Als room_id meegegeven is, check of kamer bestaat
+        if (room_id !== null && room_id !== undefined) {
+            const [rooms] = await pool.query(
+                'SELECT room_id FROM rooms WHERE room_id = ?',
+                [room_id]
+            );
+            if (rooms.length === 0) {
+                return res.status(400).json({ error: 'Room not found' });
+            }
+        }
+
+        // Update device room_id (null = ontkoppelen)
+        await pool.query(
+            'UPDATE devices SET room_id = ? WHERE dev_eui = ?',
+            [room_id || null, devEui]
+        );
+
+        res.json({ 
+            message: room_id ? 'Device gekoppeld aan kamer' : 'Device ontkoppeld van kamer',
+            dev_eui: devEui,
+            room_id: room_id || null
+        });
+    } catch (error) {
+        console.error('Error updating device room:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// ============================================
 // API ROUTES - MEASUREMENTS
 // ============================================
 
@@ -446,7 +521,7 @@ app.post('/api/webhook/ttn', async (req, res) => {
             const sensorType = mapping.type;
             const unit = mapping.unit;
 
-            // ✅ FIX: altijd sensor aanmaken OF updaten (ook als hij al bestaat met 'unknown')
+            // Sensor aanmaken OF updaten (upsert)
             await pool.query(
                 `INSERT INTO sensors (dev_eui, channel, type, unit)
                  VALUES (?, ?, ?, ?)

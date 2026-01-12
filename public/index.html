@@ -159,6 +159,39 @@ body {
 .add-room-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--coral); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
 .add-room-text { color: var(--text-muted); font-weight: 500; }
 
+/* Device toevoegen sectie */
+.add-device-section {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.add-device-section label {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.device-select {
+    flex: 1;
+    min-width: 200px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    background: var(--white);
+}
+
+.device-select:focus {
+    outline: none;
+    border-color: var(--forest-green);
+}
+
 .devices-container { display: flex; flex-direction: column; gap: var(--spacing-md); }
 .device-card { background: var(--white); border-radius: var(--radius-lg); padding: var(--spacing-md); box-shadow: var(--shadow-sm); }
 .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md); padding-bottom: var(--spacing-sm); border-bottom: 1px solid var(--beige-dark); flex-wrap: wrap; gap: var(--spacing-sm); }
@@ -207,9 +240,9 @@ body {
 .form-input:focus { outline: none; border-color: var(--forest-green); }
 .modal-footer { display: flex; justify-content: flex-end; gap: var(--spacing-sm); }
 
-.empty-state { text-align: center; padding: var(--spacing-xl); color: var(--text-muted); }
+.empty-state { text-align: center; padding: var(--spacing-lg); color: var(--text-muted); }
 
-.loading { text-align: center; padding: var(--spacing-xl); color: var(--text-muted); }
+.loading { text-align: center; padding: var(--spacing-lg); color: var(--text-muted); }
 
 .footer { background: var(--forest-green-dark); color: rgba(255, 255, 255, 0.7); text-align: center; padding: var(--spacing-md); font-size: 0.85rem; }
 
@@ -225,6 +258,7 @@ body {
     .filter-select { width: 100%; }
     .charts-grid { grid-template-columns: 1fr; }
     .room-actions { opacity: 1; }
+    .add-device-section { flex-direction: column; align-items: stretch; }
 }
 
 code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
@@ -274,6 +308,16 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
                     </div>
                 </div>
             </div>
+            
+            <!-- Device toevoegen sectie -->
+            <div class="add-device-section" id="add-device-section">
+                <label for="device-select">Device toevoegen:</label>
+                <select id="device-select" class="device-select">
+                    <option value="">-- Selecteer een device --</option>
+                </select>
+                <button class="btn btn-primary btn-sm" onclick="assignSelectedDevice()">Toevoegen</button>
+            </div>
+            
             <div class="devices-container" id="devices-container"></div>
         </section>
 
@@ -386,40 +430,34 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
 // ============================================
 // API CONFIGURATIE
 // ============================================
-// Lege string betekent zelfde server (als frontend en backend samen draaien)
 var API_URL = '';
 
 // ============================================
 // GLOBALE VARIABELEN (STATE)
 // ============================================
-var currentRoomId = null;      // ID van de huidige geopende kamer
-var currentRoom = null;        // Data van de huidige kamer
-var editMode = false;          // Of we een kamer bewerken of nieuwe aanmaken
-var charts = {};               // Opslag voor Chart.js grafieken
-var rooms = [];                // Array met alle kamers
+var currentRoomId = null;
+var currentRoom = null;
+var editMode = false;
+var charts = {};
+var rooms = [];
+var unassignedDevices = [];
 
 // ============================================
 // API FUNCTIE
 // ============================================
-
-// Functie om data op te halen van of te sturen naar de API
 function api(endpoint, options) {
-    // Standaard opties als er geen meegegeven zijn
     if (!options) {
         options = {};
     }
     
-    // Stel de headers in
     var headers = { 'Content-Type': 'application/json' };
     
-    // Maak de fetch request
     return fetch(API_URL + endpoint, {
         method: options.method || 'GET',
         headers: headers,
         body: options.body || null
     })
     .then(function(response) {
-        // Check of de response OK is
         if (!response.ok) {
             throw new Error('API request mislukt');
         }
@@ -438,45 +476,32 @@ var historyTbody = document.getElementById('history-tbody');
 var roomModal = document.getElementById('room-modal');
 var deleteModal = document.getElementById('delete-modal');
 var toast = document.getElementById('toast');
+var deviceSelect = document.getElementById('device-select');
 
 // ============================================
 // NAVIGATIE
 // ============================================
-
-// Loop door alle navigatie links en voeg click event toe
 for (var i = 0; i < navLinks.length; i++) {
     navLinks[i].addEventListener('click', function(e) {
         e.preventDefault();
-        
-        // Haal de pagina naam op uit data-page attribuut
         var targetPage = this.dataset.page;
         
-        // Verwijder active class van alle links
         for (var j = 0; j < navLinks.length; j++) {
             navLinks[j].classList.remove('active');
         }
-        
-        // Voeg active class toe aan geklikte link
         this.classList.add('active');
-        
-        // Toon de juiste pagina
         showPage(targetPage);
     });
 }
 
-// Functie om een pagina te tonen
 function showPage(pageName) {
-    // Loop door alle pagina's
     for (var i = 0; i < pages.length; i++) {
         pages[i].classList.remove('active');
-        
-        // Als dit de juiste pagina is, maak hem actief
         if (pages[i].id === pageName + '-page') {
             pages[i].classList.add('active');
         }
     }
     
-    // Als we naar historie gaan, laad de data
     if (pageName === 'history') {
         loadHistory();
         setTimeout(initCharts, 100);
@@ -486,8 +511,6 @@ function showPage(pageName) {
 // ============================================
 // TOAST NOTIFICATIES
 // ============================================
-
-// Functie om een toast bericht te tonen
 function showToast(message, isError) {
     toast.textContent = message;
     
@@ -499,7 +522,6 @@ function showToast(message, isError) {
     
     toast.classList.add('show');
     
-    // Verberg toast na 3 seconden
     setTimeout(function() {
         toast.classList.remove('show');
     }, 3000);
@@ -508,8 +530,6 @@ function showToast(message, isError) {
 // ============================================
 // KAMERS LADEN EN WEERGEVEN
 // ============================================
-
-// Functie om alle kamers op te halen van de API
 function loadRooms() {
     roomsContainer.innerHTML = '<div class="loading">Kamers laden...</div>';
     
@@ -525,9 +545,7 @@ function loadRooms() {
         });
 }
 
-// Functie om kamers te renderen in de grid
 function renderRooms() {
-    // Als er geen kamers zijn, toon alleen de "toevoegen" kaart
     if (rooms.length === 0) {
         roomsContainer.innerHTML = 
             '<div class="add-room-card" onclick="openAddRoomModal()">' +
@@ -537,13 +555,11 @@ function renderRooms() {
         return;
     }
 
-    // Bouw HTML voor elke kamer
     var html = '';
     
     for (var i = 0; i < rooms.length; i++) {
         var room = rooms[i];
         
-        // Haal temperatuur en vochtigheid op
         var temp = '--';
         var humidity = '--';
         
@@ -554,11 +570,8 @@ function renderRooms() {
             humidity = room.latest.humidity.value;
         }
         
-        // Bepaal online/offline status
         var statusClass = room.is_online ? '' : 'offline';
         var statusText = room.is_online ? 'Online' : 'Offline';
-        
-        // Bepaal meervoud voor devices
         var deviceText = room.device_count === 1 ? 'device' : 'devices';
         
         html += 
@@ -590,7 +603,6 @@ function renderRooms() {
             '</div>';
     }
 
-    // Voeg de "nieuwe kamer" kaart toe
     html += 
         '<div class="add-room-card" onclick="openAddRoomModal()">' +
             '<div class="add-room-icon">+</div>' +
@@ -603,85 +615,162 @@ function renderRooms() {
 // ============================================
 // KAMER DETAIL PAGINA
 // ============================================
-
-// Functie om een kamer te openen
 function openRoom(roomId) {
     currentRoomId = roomId;
     devicesContainer.innerHTML = '<div class="loading">Laden...</div>';
     showPage('room');
     
-    // Verwijder active class van navigatie
     for (var i = 0; i < navLinks.length; i++) {
         navLinks[i].classList.remove('active');
     }
 
+    // Laad kamer data en ontkoppelde devices
     api('/api/rooms/' + roomId)
         .then(function(data) {
             currentRoom = data;
             
-            // Update titel
             document.getElementById('room-title').textContent = 'Kamer ' + currentRoom.name;
             
-            // Update subtitel
             var deviceCount = currentRoom.devices ? currentRoom.devices.length : 0;
             document.getElementById('room-subtitle').textContent = deviceCount + ' device(s)';
 
-            // Geen devices?
-            if (!currentRoom.devices || currentRoom.devices.length === 0) {
-                devicesContainer.innerHTML = '<div class="empty-state"><p>Geen devices gekoppeld aan deze kamer</p></div>';
-                return;
-            }
-
-            // Bouw HTML voor devices
-            var html = '';
-            
-            for (var i = 0; i < currentRoom.devices.length; i++) {
-                var device = currentRoom.devices[i];
-                
-                var statusClass = device.is_online ? '' : 'offline';
-                var lastSeenText = device.last_seen_at ? 
-                    'Laatste update: ' + getTimeAgo(new Date(device.last_seen_at)) : 
-                    'Nog geen data';
-                
-                // Bouw sensors HTML
-                var sensorsHtml = '';
-                if (device.sensors) {
-                    for (var j = 0; j < device.sensors.length; j++) {
-                        var sensor = device.sensors[j];
-                        var sensorValue = sensor.latest_value !== null ? sensor.latest_value : '--';
-                        var sensorUnit = sensor.unit || '';
-                        
-                        sensorsHtml += 
-                            '<div class="sensor-card">' +
-                                '<div class="sensor-label">' + getSensorTypeName(sensor.type) + '</div>' +
-                                '<div class="sensor-value">' + sensorValue + 
-                                    '<span class="sensor-unit">' + sensorUnit + '</span>' +
-                                '</div>' +
-                            '</div>';
-                    }
-                }
-                
-                html += 
-                    '<div class="device-card">' +
-                        '<div class="device-header">' +
-                            '<div>' +
-                                '<div class="device-name">' + (device.name || 'Device') + '</div>' +
-                                '<div class="device-last-seen">' +
-                                    '<span class="status-dot ' + statusClass + '" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span>' +
-                                    lastSeenText +
-                                '</div>' +
-                            '</div>' +
-                            '<span class="device-eui">' + device.dev_eui + '</span>' +
-                        '</div>' +
-                        '<div class="sensors-grid">' + sensorsHtml + '</div>' +
-                    '</div>';
-            }
-            
-            devicesContainer.innerHTML = html;
+            renderDevices();
+            loadUnassignedDevices();
         })
         .catch(function(error) {
             devicesContainer.innerHTML = '<div class="empty-state"><p>Kon kamer niet laden</p></div>';
         });
+}
+
+// Render devices in de kamer
+function renderDevices() {
+    if (!currentRoom.devices || currentRoom.devices.length === 0) {
+        devicesContainer.innerHTML = '<div class="empty-state"><p>Geen devices gekoppeld aan deze kamer. Gebruik de dropdown hierboven om een device toe te voegen.</p></div>';
+        return;
+    }
+
+    var html = '';
+    
+    for (var i = 0; i < currentRoom.devices.length; i++) {
+        var device = currentRoom.devices[i];
+        
+        var statusClass = device.is_online ? '' : 'offline';
+        var lastSeenText = device.last_seen_at ? 
+            'Laatste update: ' + getTimeAgo(new Date(device.last_seen_at)) : 
+            'Nog geen data';
+        
+        var sensorsHtml = '';
+        if (device.sensors) {
+            for (var j = 0; j < device.sensors.length; j++) {
+                var sensor = device.sensors[j];
+                var sensorValue = sensor.latest_value !== null ? sensor.latest_value : '--';
+                var sensorUnit = sensor.unit || '';
+                
+                sensorsHtml += 
+                    '<div class="sensor-card">' +
+                        '<div class="sensor-label">' + getSensorTypeName(sensor.type) + '</div>' +
+                        '<div class="sensor-value">' + sensorValue + 
+                            '<span class="sensor-unit">' + sensorUnit + '</span>' +
+                        '</div>' +
+                    '</div>';
+            }
+        }
+        
+        html += 
+            '<div class="device-card">' +
+                '<div class="device-header">' +
+                    '<div>' +
+                        '<div class="device-name">' + (device.name || 'Device') + '</div>' +
+                        '<div class="device-last-seen">' +
+                            '<span class="status-dot ' + statusClass + '" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span>' +
+                            lastSeenText +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:8px;align-items:center;">' +
+                        '<span class="device-eui">' + device.dev_eui + '</span>' +
+                        '<button class="btn btn-danger btn-sm" onclick="unassignDevice(\'' + device.dev_eui + '\')">Ontkoppelen</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="sensors-grid">' + sensorsHtml + '</div>' +
+            '</div>';
+    }
+    
+    devicesContainer.innerHTML = html;
+}
+
+// Laad devices die nog niet aan een kamer gekoppeld zijn
+function loadUnassignedDevices() {
+    api('/api/devices?unassigned=1')
+        .then(function(devices) {
+            unassignedDevices = devices;
+            renderDeviceSelect();
+        })
+        .catch(function(error) {
+            console.error('Fout bij laden devices:', error);
+        });
+}
+
+// Render de device dropdown
+function renderDeviceSelect() {
+    var html = '<option value="">-- Selecteer een device --</option>';
+    
+    for (var i = 0; i < unassignedDevices.length; i++) {
+        var device = unassignedDevices[i];
+        var deviceName = device.name || 'Device ' + device.dev_eui.slice(-4);
+        html += '<option value="' + device.dev_eui + '">' + deviceName + ' (' + device.dev_eui.slice(-8) + ')</option>';
+    }
+    
+    deviceSelect.innerHTML = html;
+    
+    // Toon/verberg sectie afhankelijk van beschikbare devices
+    var addSection = document.getElementById('add-device-section');
+    if (unassignedDevices.length === 0) {
+        addSection.style.display = 'none';
+    } else {
+        addSection.style.display = 'flex';
+    }
+}
+
+// Koppel geselecteerd device aan huidige kamer
+function assignSelectedDevice() {
+    var selectedDevEui = deviceSelect.value;
+    
+    if (!selectedDevEui) {
+        showToast('Selecteer eerst een device', true);
+        return;
+    }
+    
+    api('/api/devices/' + selectedDevEui + '/room', {
+        method: 'PUT',
+        body: JSON.stringify({ room_id: currentRoomId })
+    })
+    .then(function() {
+        showToast('Device toegevoegd aan kamer');
+        openRoom(currentRoomId); // Herlaad de kamer
+    })
+    .catch(function(error) {
+        showToast('Fout bij toevoegen device', true);
+    });
+}
+
+// Ontkoppel device van kamer
+function unassignDevice(devEui) {
+    if (!confirm('Weet je zeker dat je dit device wilt ontkoppelen van deze kamer?')) {
+        return;
+    }
+    
+    api('/api/devices/' + devEui + '/room', {
+        method: 'PUT',
+        body: JSON.stringify({ room_id: null })
+    })
+    .then(function() {
+        showToast('Device ontkoppeld van kamer');
+        openRoom(currentRoomId); // Herlaad de kamer
+        loadRooms(); // Update ook het dashboard
+    })
+    .catch(function(error) {
+        showToast('Fout bij ontkoppelen device', true);
+    });
 }
 
 // Hulpfunctie: sensor type naar Nederlandse naam
@@ -692,7 +781,8 @@ function getSensorTypeName(type) {
         'pressure': 'Luchtdruk',
         'light': 'Lichtsterkte',
         'presence': 'Aanwezigheid',
-        'co2': 'CO2'
+        'co2': 'CO2',
+        'noise': 'Ruis'
     };
     return names[type] || type;
 }
@@ -716,6 +806,7 @@ document.getElementById('btn-back').addEventListener('click', function() {
     currentRoomId = null;
     currentRoom = null;
     showPage('dashboard');
+    loadRooms(); // Herlaad kamers om device counts te updaten
     
     for (var i = 0; i < navLinks.length; i++) {
         navLinks[i].classList.remove('active');
@@ -728,7 +819,6 @@ document.getElementById('btn-back').addEventListener('click', function() {
 // ============================================
 // MODAL FUNCTIES
 // ============================================
-
 function openAddRoomModal() {
     editMode = false;
     document.getElementById('modal-title').textContent = 'Nieuwe kamer toevoegen';
@@ -839,7 +929,6 @@ function deleteRoom() {
         });
 }
 
-// Modal sluiten bij klik buiten
 roomModal.addEventListener('click', function(e) {
     if (e.target === roomModal) closeModal();
 });
@@ -847,7 +936,6 @@ deleteModal.addEventListener('click', function(e) {
     if (e.target === deleteModal) closeDeleteModal();
 });
 
-// Escape toets
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeModal();
@@ -858,7 +946,6 @@ document.addEventListener('keydown', function(e) {
 // ============================================
 // HISTORIE EN GRAFIEKEN
 // ============================================
-
 function loadHistory() {
     var roomFilter = document.getElementById('filter-room').value;
     var queryString = '?limit=100';
@@ -979,7 +1066,6 @@ function initCharts() {
                 labels.push(date.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric' }));
             }
 
-            // Temperatuur grafiek
             var tempRooms = Object.keys(tempData);
             var tempDatasets = [];
             
@@ -1007,7 +1093,6 @@ function initCharts() {
                 });
             }
 
-            // Luchtvochtigheid grafiek
             var humidityRooms = Object.keys(humidityData);
             var humidityDatasets = [];
             
@@ -1040,7 +1125,6 @@ function initCharts() {
         });
 }
 
-// Filter knop
 document.getElementById('btn-filter').addEventListener('click', function() {
     loadHistory();
     initCharts();
