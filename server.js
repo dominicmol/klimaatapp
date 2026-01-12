@@ -40,10 +40,10 @@ const pool = mysql.createPool({
 async function testConnection() {
     try {
         const connection = await pool.getConnection();
-        console.log('✅ Database connected successfully');
+        console.log('[OK] Database connected successfully');
         connection.release();
     } catch (error) {
-        console.error('❌ Database connection failed:', error.message);
+        console.error('[ERROR] Database connection failed:', error.message);
     }
 }
 
@@ -369,7 +369,7 @@ app.get('/api/measurements/chart', async (req, res) => {
 // POST /api/webhook/ttn - Ontvang data van The Things Network
 app.post('/api/webhook/ttn', async (req, res) => {
     try {
-        console.log('📡 TTN Webhook received');
+        console.log('[WEBHOOK] TTN data received');
         
         const payload = req.body;
         
@@ -380,17 +380,17 @@ app.post('/api/webhook/ttn', async (req, res) => {
         const decodedPayload = payload.uplink_message?.decoded_payload;
 
         if (!devEui) {
-            console.log('⚠️ No dev_eui in payload');
+            console.log('[WARNING] No dev_eui in payload');
             return res.status(400).json({ error: 'Missing dev_eui' });
         }
 
         if (!decodedPayload) {
-            console.log('⚠️ No decoded_payload in payload');
+            console.log('[WARNING] No decoded_payload in payload');
             return res.status(400).json({ error: 'Missing decoded_payload' });
         }
 
-        console.log(`📍 Device: ${devEui}`);
-        console.log(`📊 Data:`, decodedPayload);
+        console.log('[DEVICE]', devEui);
+        console.log('[DATA]', decodedPayload);
 
         // Check of device bestaat, zo niet maak aan
         const [existingDevice] = await pool.query(
@@ -402,9 +402,9 @@ app.post('/api/webhook/ttn', async (req, res) => {
             // Maak nieuw device aan (zonder kamer)
             await pool.query(
                 'INSERT INTO devices (dev_eui, name) VALUES (?, ?)',
-                [devEui, deviceId || `Device ${devEui.slice(-4)}`]
+                [devEui, deviceId || 'Device ' + devEui.slice(-4)]
             );
-            console.log(`✨ New device created: ${devEui}`);
+            console.log('[NEW] Device created:', devEui);
         }
 
         // Update last_seen_at
@@ -413,79 +413,71 @@ app.post('/api/webhook/ttn', async (req, res) => {
             [new Date(receivedAt), devEui]
         );
 
-        // Verwerk sensor data
-        // TTN payload formaat kan variëren, hier enkele voorbeelden:
-        // { temperature_0: 21.5, humidity_1: 45 }
-        // { temp: 21.5, hum: 45, pressure: 1013 }
-        // { ch0: 21.5, ch1: 45 }
+        // Channel mapping volgens Bart:
+        // Channel 1 = relatieve luchtvochtigheid [%]
+        // Channel 2 = temperatuur [Celsius]
+        // Channel 3 = procentuele aanwezigheid [%]
+        // Channel 4 = CO2 [ppm]
+        // Channel 5 = Licht [%]
+        // Channel 6 = Ruis [dB]
+        const channelMapping = {
+            1: { type: 'humidity', unit: '%' },
+            2: { type: 'temperature', unit: 'C' },
+            3: { type: 'presence', unit: '%' },
+            4: { type: 'co2', unit: 'ppm' },
+            5: { type: 'light', unit: '%' },
+            6: { type: 'noise', unit: 'dB' }
+        };
 
-        const sensorMappings = [
-            { patterns: ['temperature', 'temp', 'temperatuur'], type: 'temperature', unit: '°C' },
-            { patterns: ['humidity', 'hum', 'vochtigheid', 'rh'], type: 'humidity', unit: '%' },
-            { patterns: ['pressure', 'luchtdruk', 'baro'], type: 'pressure', unit: 'hPa' },
-            { patterns: ['light', 'lux', 'licht'], type: 'light', unit: 'lux' },
-            { patterns: ['presence', 'motion', 'beweging'], type: 'presence', unit: '' },
-            { patterns: ['co2', 'carbon'], type: 'co2', unit: 'ppm' }
-        ];
+        let savedCount = 0;
 
-        let channel = 0;
         for (const [key, value] of Object.entries(decodedPayload)) {
             if (typeof value !== 'number') continue;
 
-            // Bepaal sensor type
-            let sensorType = null;
-            let unit = '';
-            const keyLower = key.toLowerCase();
-
-            for (const mapping of sensorMappings) {
-                if (mapping.patterns.some(p => keyLower.includes(p))) {
-                    sensorType = mapping.type;
-                    unit = mapping.unit;
-                    break;
-                }
-            }
-
-            if (!sensorType) {
-                sensorType = 'unknown';
-                unit = '';
-            }
-
-            // Extract channel number from key if present (e.g., temperature_0 -> 0)
+            // Haal channel nummer uit key (bijv. "temperature_2" -> 2)
             const channelMatch = key.match(/_(\d+)$/);
-            const sensorChannel = channelMatch ? parseInt(channelMatch[1]) : channel;
+            if (!channelMatch) continue;
+            
+            const channelNum = parseInt(channelMatch[1]);
+            const mapping = channelMapping[channelNum];
+            
+            if (!mapping) continue;
+
+            const sensorType = mapping.type;
+            const unit = mapping.unit;
 
             // Zorg dat sensor bestaat
             const [existingSensor] = await pool.query(
                 'SELECT * FROM sensors WHERE dev_eui = ? AND channel = ?',
-                [devEui, sensorChannel]
+                [devEui, channelNum]
             );
 
             if (existingSensor.length === 0) {
                 await pool.query(
                     'INSERT INTO sensors (dev_eui, channel, type, unit) VALUES (?, ?, ?, ?)',
-                    [devEui, sensorChannel, sensorType, unit]
+                    [devEui, channelNum, sensorType, unit]
                 );
-                console.log(`✨ New sensor created: ${devEui} ch${sensorChannel} (${sensorType})`);
+                console.log('[NEW] Sensor created:', devEui, 'ch' + channelNum, '(' + sensorType + ')');
             }
 
             // Sla meting op
             await pool.query(
                 'INSERT INTO measurements (dev_eui, channel, value, measured_at) VALUES (?, ?, ?, ?)',
-                [devEui, sensorChannel, value, new Date(receivedAt)]
+                [devEui, channelNum, value, new Date(receivedAt)]
             );
-            console.log(`💾 Saved: ${sensorType} = ${value}${unit}`);
+            console.log('[SAVED]', sensorType, '=', value, unit);
 
-            channel++;
+            savedCount++;
         }
 
         res.json({ 
             success: true, 
-            message: `Processed ${channel} sensor values`,
+            message: 'Processed ' + savedCount + ' sensor values',
             dev_eui: devEui
         });
 
     } catch (error) {
-        console.error('❌ Webhook error:', error);
+        console.error('[ERROR] Webhook error:', error);
         res.status(500).json({ error: 'Failed to process webhook' });
     }
 });
@@ -503,6 +495,6 @@ app.use(express.static('public'));
 
 // Start server
 app.listen(PORT, async () => {
-    console.log(`🌿 Klimaatapp server running on port ${PORT}`);
+    console.log('Klimaatapp server running on port', PORT);
     await testConnection();
 });
