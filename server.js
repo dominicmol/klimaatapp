@@ -446,19 +446,15 @@ app.post('/api/webhook/ttn', async (req, res) => {
             const sensorType = mapping.type;
             const unit = mapping.unit;
 
-            // Zorg dat sensor bestaat
-            const [existingSensor] = await pool.query(
-                'SELECT * FROM sensors WHERE dev_eui = ? AND channel = ?',
-                [devEui, channelNum]
+            // ✅ FIX: altijd sensor aanmaken OF updaten (ook als hij al bestaat met 'unknown')
+            await pool.query(
+                `INSERT INTO sensors (dev_eui, channel, type, unit)
+                 VALUES (?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE
+                    type = VALUES(type),
+                    unit = VALUES(unit)`,
+                [devEui, channelNum, sensorType, unit]
             );
-
-            if (existingSensor.length === 0) {
-                await pool.query(
-                    'INSERT INTO sensors (dev_eui, channel, type, unit) VALUES (?, ?, ?, ?)',
-                    [devEui, channelNum, sensorType, unit]
-                );
-                console.log('[NEW] Sensor created:', devEui, 'ch' + channelNum, '(' + sensorType + ')');
-            }
 
             // Sla meting op
             await pool.query(
