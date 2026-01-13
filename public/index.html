@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klimaatapp</title>
+    <!-- Chart.js library voor grafieken -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+/* ============================================
+   CSS VARIABELEN
+   Alle kleuren en waardes op één plek gedefinieerd
+   zodat de stijl makkelijk aan te passen is
+   ============================================ */
 :root {
     --forest-green: #2D5A3D;
     --forest-green-light: #3A7D4E;
@@ -46,6 +52,9 @@ body {
     flex-direction: column;
 }
 
+/* ============================================
+   NAVIGATIEBALK
+   ============================================ */
 .navbar {
     background: var(--forest-green);
     padding: var(--spacing-sm) var(--spacing-lg);
@@ -75,6 +84,9 @@ body {
 .nav-link:hover { color: var(--white); background: rgba(255, 255, 255, 0.1); }
 .nav-link.active { color: var(--white); background: rgba(255, 255, 255, 0.15); }
 
+/* ============================================
+   HOOFDCONTENT
+   ============================================ */
 .main-content {
     flex: 1;
     padding: var(--spacing-lg);
@@ -96,6 +108,9 @@ body {
 .page-header h1 { color: var(--forest-green); font-size: 2rem; font-weight: 700; margin-bottom: var(--spacing-xs); }
 .subtitle { color: var(--text-muted); font-size: 1rem; }
 
+/* ============================================
+   BUTTONS
+   ============================================ */
 .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: var(--spacing-xs) var(--spacing-md); border: none; border-radius: var(--radius-sm);
@@ -119,6 +134,17 @@ body {
 }
 .btn-back:hover { color: var(--coral); }
 
+.btn-icon {
+    width: 32px; height: 32px; padding: 0; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; background: var(--beige); border: none; cursor: pointer;
+    font-size: 0.9rem;
+}
+.btn-icon:hover { background: var(--beige-dark); }
+.btn-icon.delete:hover { background: var(--danger); color: var(--white); }
+
+/* ============================================
+   KAMER CARDS
+   ============================================ */
 .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--spacing-md); }
 
 .room-card {
@@ -141,14 +167,6 @@ body {
 .room-actions { display: flex; gap: 8px; opacity: 0; transition: opacity var(--transition-fast); }
 .room-card:hover .room-actions { opacity: 1; }
 
-.btn-icon {
-    width: 32px; height: 32px; padding: 0; border-radius: 50%; display: flex;
-    align-items: center; justify-content: center; background: var(--beige); border: none; cursor: pointer;
-    font-size: 0.9rem;
-}
-.btn-icon:hover { background: var(--beige-dark); }
-.btn-icon.delete:hover { background: var(--danger); color: var(--white); }
-
 .add-room-card {
     background: var(--white); border-radius: var(--radius-lg); padding: var(--spacing-md);
     box-shadow: var(--shadow-sm); border: 2px dashed var(--border-color); cursor: pointer;
@@ -159,6 +177,9 @@ body {
 .add-room-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--coral); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
 .add-room-text { color: var(--text-muted); font-weight: 500; }
 
+/* ============================================
+   DEVICE SECTIE
+   ============================================ */
 .add-device-section {
     background: var(--white);
     border-radius: var(--radius-lg);
@@ -204,6 +225,9 @@ body {
 .sensor-value { font-size: 1.8rem; font-weight: 700; color: var(--forest-green); line-height: 1.2; }
 .sensor-unit { font-size: 1rem; font-weight: 400; color: var(--text-muted); }
 
+/* ============================================
+   HISTORIE PAGINA
+   ============================================ */
 .history-filters { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); align-items: flex-end; margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
 .filter-group { display: flex; flex-direction: column; gap: 6px; }
 .filter-group label { font-size: 0.8rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; }
@@ -229,6 +253,9 @@ body {
 
 .data-info { background: var(--beige-dark); padding: var(--spacing-sm); border-radius: var(--radius-sm); margin-bottom: var(--spacing-md); font-size: 0.85rem; color: var(--text-muted); }
 
+/* ============================================
+   MODALS
+   ============================================ */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all var(--transition-normal); }
 .modal-overlay.active { opacity: 1; visibility: visible; }
 .modal { background: var(--white); border-radius: var(--radius-lg); padding: var(--spacing-lg); width: 100%; max-width: 450px; margin: var(--spacing-md); transform: translateY(20px); transition: transform var(--transition-normal); }
@@ -243,16 +270,21 @@ body {
 .form-input:focus { outline: none; border-color: var(--forest-green); }
 .modal-footer { display: flex; justify-content: flex-end; gap: var(--spacing-sm); }
 
+/* ============================================
+   OVERIGE ELEMENTEN
+   ============================================ */
 .empty-state { text-align: center; padding: var(--spacing-lg); color: var(--text-muted); }
-
 .loading { text-align: center; padding: var(--spacing-lg); color: var(--text-muted); }
-
 .footer { background: var(--forest-green-dark); color: rgba(255, 255, 255, 0.7); text-align: center; padding: var(--spacing-md); font-size: 0.85rem; }
 
 .toast { position: fixed; bottom: 20px; right: 20px; background: var(--forest-green); color: var(--white); padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); transform: translateY(100px); opacity: 0; transition: all var(--transition-normal); z-index: 1001; }
 .toast.show { transform: translateY(0); opacity: 1; }
 .toast.error { background: var(--danger); }
 
+/* ============================================
+   RESPONSIVE DESIGN
+   Aanpassingen voor mobiele schermen
+   ============================================ */
 @media (max-width: 768px) {
     .main-content { padding: var(--spacing-sm); }
     .rooms-grid { grid-template-columns: 1fr; }
@@ -268,6 +300,10 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
     </style>
 </head>
 <body>
+    <!-- ============================================
+         NAVIGATIEBALK
+         Bevat het logo en links naar Dashboard en Historie
+         ============================================ -->
     <nav class="navbar">
         <div class="nav-brand">
             <span class="nav-icon">🌿</span>
@@ -280,7 +316,10 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
     </nav>
 
     <main class="main-content">
-        <!-- Dashboard pagina -->
+        <!-- ============================================
+             DASHBOARD PAGINA
+             Toont alle kamers in een grid
+             ============================================ -->
         <section id="dashboard-page" class="page active">
             <div class="page-header">
                 <div class="page-header-row">
@@ -288,7 +327,7 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
                         <h1>Kamers Overzicht</h1>
                         <p class="subtitle">Selecteer een kamer om de actuele klimaatdata te bekijken</p>
                     </div>
-                    <button class="btn btn-primary" onclick="openAddRoomModal()">+ Nieuwe kamer</button>
+                    <button class="btn btn-primary" id="btn-add-room">+ Nieuwe kamer</button>
                 </div>
             </div>
             <div class="rooms-grid" id="rooms-container">
@@ -296,7 +335,10 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
             </div>
         </section>
 
-        <!-- Kamer detail pagina -->
+        <!-- ============================================
+             KAMER DETAIL PAGINA
+             Toont de devices en sensoren van een kamer
+             ============================================ -->
         <section id="room-page" class="page">
             <div class="page-header">
                 <button class="btn-back" id="btn-back">Terug naar overzicht</button>
@@ -306,24 +348,29 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
                         <p class="subtitle" id="room-subtitle">Laden...</p>
                     </div>
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-outline btn-sm" onclick="openEditRoomModal()">Bewerken</button>
-                        <button class="btn btn-danger btn-sm" onclick="confirmDeleteRoom()">Verwijderen</button>
+                        <button class="btn btn-outline btn-sm" id="btn-edit-room">Bewerken</button>
+                        <button class="btn btn-danger btn-sm" id="btn-delete-room">Verwijderen</button>
                     </div>
                 </div>
             </div>
             
+            <!-- Sectie om een device aan de kamer toe te voegen -->
             <div class="add-device-section" id="add-device-section">
                 <label for="device-select">Device toevoegen:</label>
                 <select id="device-select" class="device-select">
                     <option value="">-- Selecteer een device --</option>
                 </select>
-                <button class="btn btn-primary btn-sm" onclick="assignSelectedDevice()">Toevoegen</button>
+                <button class="btn btn-primary btn-sm" id="btn-assign-device">Toevoegen</button>
             </div>
             
+            <!-- Container voor device cards -->
             <div class="devices-container" id="devices-container"></div>
         </section>
 
-        <!-- Historie pagina -->
+        <!-- ============================================
+             HISTORIE PAGINA
+             Toont grafieken en meetgeschiedenis
+             ============================================ -->
         <section id="history-page" class="page">
             <div class="page-header">
                 <h1>Meetgeschiedenis</h1>
@@ -334,7 +381,7 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
                 Data wordt automatisch verwijderd na 4 dagen. Grafieken tonen gemiddelde waarden per uur, per device.
             </div>
 
-            <!-- Filters -->
+            <!-- Filter opties -->
             <div class="history-filters">
                 <div class="filter-group">
                     <label for="filter-room">Kamer</label>
@@ -351,14 +398,14 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
                 <button class="btn btn-primary" id="btn-filter">Filteren</button>
             </div>
 
-            <!-- Grafieken voor alle 6 sensor types -->
+            <!-- Container voor grafieken -->
             <div class="charts-section">
                 <div class="charts-grid" id="charts-container">
-                    <!-- Charts worden dynamisch gegenereerd -->
+                    <!-- Charts worden dynamisch gegenereerd door ChartManager -->
                 </div>
             </div>
 
-            <!-- Meetgegevens tabel -->
+            <!-- Tabel met laatste metingen -->
             <h3 class="history-section-title">Laatste 100 metingen</h3>
             <div class="history-table-container">
                 <table class="history-table">
@@ -381,12 +428,14 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
         <p>Klimaatapp 2025 - Avans Hogeschool</p>
     </footer>
 
-    <!-- Modal voor kamer toevoegen/bewerken -->
+    <!-- ============================================
+         MODAL: Kamer toevoegen/bewerken
+         ============================================ -->
     <div class="modal-overlay" id="room-modal">
         <div class="modal">
             <div class="modal-header">
                 <h2 class="modal-title" id="modal-title">Nieuwe kamer toevoegen</h2>
-                <button class="modal-close" onclick="closeModal()">x</button>
+                <button class="modal-close" id="modal-close">×</button>
             </div>
             <div class="modal-body">
                 <form id="room-form">
@@ -397,817 +446,42 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal()">Annuleren</button>
-                <button class="btn btn-primary" onclick="saveRoom()">Opslaan</button>
+                <button class="btn btn-secondary" id="modal-cancel">Annuleren</button>
+                <button class="btn btn-primary" id="modal-save">Opslaan</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal voor verwijderen bevestiging -->
+    <!-- ============================================
+         MODAL: Verwijder bevestiging
+         ============================================ -->
     <div class="modal-overlay" id="delete-modal">
         <div class="modal">
             <div class="modal-header">
                 <h2 class="modal-title">Kamer verwijderen?</h2>
-                <button class="modal-close" onclick="closeDeleteModal()">x</button>
+                <button class="modal-close" id="delete-modal-close">×</button>
             </div>
             <div class="modal-body">
                 <p>Weet je zeker dat je <strong id="delete-room-name">deze kamer</strong> wilt verwijderen?</p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeDeleteModal()">Annuleren</button>
-                <button class="btn btn-danger" onclick="deleteRoom()">Verwijderen</button>
+                <button class="btn btn-secondary" id="delete-modal-cancel">Annuleren</button>
+                <button class="btn btn-danger" id="delete-modal-confirm">Verwijderen</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast notificatie -->
+    <!-- Toast notificatie element -->
     <div class="toast" id="toast"></div>
 
-    <script>
-// ============================================
-// API CONFIGURATIE
-// ============================================
-var API_URL = '';
-
-// ============================================
-// GLOBALE VARIABELEN (STATE)
-// ============================================
-var currentRoomId = null;
-var currentRoom = null;
-var editMode = false;
-var charts = {};
-var rooms = [];
-var unassignedDevices = [];
-
-// Alle sensor types met Nederlandse namen en kleuren
-var sensorTypes = {
-    'temperature': { name: 'Temperatuur', unit: 'C', color: '#E07B67' },
-    'humidity': { name: 'Luchtvochtigheid', unit: '%', color: '#2D5A3D' },
-    'presence': { name: 'Aanwezigheid', unit: '%', color: '#6B7B6C' },
-    'co2': { name: 'CO2', unit: 'ppm', color: '#8B4513' },
-    'light': { name: 'Lichtsterkte', unit: '%', color: '#FFD700' },
-    'noise': { name: 'Ruis', unit: 'dB', color: '#4169E1' }
-};
-
-// Kleuren voor verschillende devices
-var deviceColors = [
-    '#2D5A3D', '#E07B67', '#4169E1', '#FFD700', '#8B4513', '#6B7B6C',
-    '#FF6347', '#20B2AA', '#9370DB', '#3CB371'
-];
-
-// ============================================
-// API FUNCTIE
-// ============================================
-function api(endpoint, options) {
-    if (!options) {
-        options = {};
-    }
-    
-    var headers = { 'Content-Type': 'application/json' };
-    
-    return fetch(API_URL + endpoint, {
-        method: options.method || 'GET',
-        headers: headers,
-        body: options.body || null
-    })
-    .then(function(response) {
-        if (!response.ok) {
-            throw new Error('API request mislukt');
-        }
-        return response.json();
-    });
-}
-
-// ============================================
-// DOM ELEMENTEN OPHALEN
-// ============================================
-var navLinks = document.querySelectorAll('.nav-link');
-var pages = document.querySelectorAll('.page');
-var roomsContainer = document.getElementById('rooms-container');
-var devicesContainer = document.getElementById('devices-container');
-var historyTbody = document.getElementById('history-tbody');
-var roomModal = document.getElementById('room-modal');
-var deleteModal = document.getElementById('delete-modal');
-var toast = document.getElementById('toast');
-var deviceSelect = document.getElementById('device-select');
-var chartsContainer = document.getElementById('charts-container');
-
-// ============================================
-// NAVIGATIE
-// ============================================
-for (var i = 0; i < navLinks.length; i++) {
-    navLinks[i].addEventListener('click', function(e) {
-        e.preventDefault();
-        var targetPage = this.dataset.page;
-        
-        for (var j = 0; j < navLinks.length; j++) {
-            navLinks[j].classList.remove('active');
-        }
-        this.classList.add('active');
-        showPage(targetPage);
-    });
-}
-
-function showPage(pageName) {
-    for (var i = 0; i < pages.length; i++) {
-        pages[i].classList.remove('active');
-        if (pages[i].id === pageName + '-page') {
-            pages[i].classList.add('active');
-        }
-    }
-    
-    if (pageName === 'history') {
-        loadHistory();
-        loadSensorTypeFilter();
-        setTimeout(initAllCharts, 100);
-    }
-}
-
-// ============================================
-// TOAST NOTIFICATIES
-// ============================================
-function showToast(message, isError) {
-    toast.textContent = message;
-    
-    if (isError) {
-        toast.className = 'toast error';
-    } else {
-        toast.className = 'toast';
-    }
-    
-    toast.classList.add('show');
-    
-    setTimeout(function() {
-        toast.classList.remove('show');
-    }, 3000);
-}
-
-// ============================================
-// KAMERS LADEN EN WEERGEVEN
-// ============================================
-function loadRooms() {
-    roomsContainer.innerHTML = '<div class="loading">Kamers laden...</div>';
-    
-    api('/api/rooms')
-        .then(function(data) {
-            rooms = data;
-            renderRooms();
-            updateRoomFilter();
-        })
-        .catch(function(error) {
-            roomsContainer.innerHTML = '<div class="empty-state"><p>Kon kamers niet laden. Is de backend actief?</p></div>';
-            showToast('Fout bij laden kamers', true);
-        });
-}
-
-function renderRooms() {
-    if (rooms.length === 0) {
-        roomsContainer.innerHTML = 
-            '<div class="add-room-card" onclick="openAddRoomModal()">' +
-                '<div class="add-room-icon">+</div>' +
-                '<span class="add-room-text">Eerste kamer toevoegen</span>' +
-            '</div>';
-        return;
-    }
-
-    var html = '';
-    
-    for (var i = 0; i < rooms.length; i++) {
-        var room = rooms[i];
-        
-        var temp = '--';
-        var humidity = '--';
-        
-        if (room.latest && room.latest.temperature) {
-            temp = room.latest.temperature.value;
-        }
-        if (room.latest && room.latest.humidity) {
-            humidity = room.latest.humidity.value;
-        }
-        
-        var statusClass = room.is_online ? '' : 'offline';
-        var statusText = room.is_online ? 'Online' : 'Offline';
-        var deviceText = room.device_count === 1 ? 'device' : 'devices';
-        
-        html += 
-            '<div class="room-card" onclick="openRoom(' + room.room_id + ')">' +
-                '<div class="room-card-header">' +
-                    '<span class="room-name">' + room.name + '</span>' +
-                    '<span class="room-status">' +
-                        '<span class="status-dot ' + statusClass + '"></span>' +
-                        statusText +
-                    '</span>' +
-                '</div>' +
-                '<div class="room-stats">' +
-                    '<div class="stat">' +
-                        '<span class="stat-value">' + temp + '<small>C</small></span>' +
-                        '<span class="stat-label">Temperatuur</span>' +
-                    '</div>' +
-                    '<div class="stat">' +
-                        '<span class="stat-value">' + humidity + '<small>%</small></span>' +
-                        '<span class="stat-label">Vochtigheid</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="room-footer">' +
-                    '<span class="room-devices">' + room.device_count + ' ' + deviceText + '</span>' +
-                    '<div class="room-actions">' +
-                        '<button class="btn-icon" onclick="event.stopPropagation(); openEditRoomModalFor(' + room.room_id + ')" title="Bewerken">E</button>' +
-                        '<button class="btn-icon delete" onclick="event.stopPropagation(); confirmDeleteRoomFor(' + room.room_id + ')" title="Verwijderen">X</button>' +
-                    '</div>' +
-                '</div>' +
-            '</div>';
-    }
-
-    html += 
-        '<div class="add-room-card" onclick="openAddRoomModal()">' +
-            '<div class="add-room-icon">+</div>' +
-            '<span class="add-room-text">Nieuwe kamer toevoegen</span>' +
-        '</div>';
-
-    roomsContainer.innerHTML = html;
-}
-
-// ============================================
-// KAMER DETAIL PAGINA
-// ============================================
-function openRoom(roomId) {
-    currentRoomId = roomId;
-    devicesContainer.innerHTML = '<div class="loading">Laden...</div>';
-    showPage('room');
-    
-    for (var i = 0; i < navLinks.length; i++) {
-        navLinks[i].classList.remove('active');
-    }
-
-    api('/api/rooms/' + roomId)
-        .then(function(data) {
-            currentRoom = data;
-            
-            document.getElementById('room-title').textContent = 'Kamer ' + currentRoom.name;
-            
-            var deviceCount = currentRoom.devices ? currentRoom.devices.length : 0;
-            document.getElementById('room-subtitle').textContent = deviceCount + ' device(s)';
-
-            renderDevices();
-            loadUnassignedDevices();
-        })
-        .catch(function(error) {
-            devicesContainer.innerHTML = '<div class="empty-state"><p>Kon kamer niet laden</p></div>';
-        });
-}
-
-function renderDevices() {
-    if (!currentRoom.devices || currentRoom.devices.length === 0) {
-        devicesContainer.innerHTML = '<div class="empty-state"><p>Geen devices gekoppeld aan deze kamer. Gebruik de dropdown hierboven om een device toe te voegen.</p></div>';
-        return;
-    }
-
-    var html = '';
-    
-    for (var i = 0; i < currentRoom.devices.length; i++) {
-        var device = currentRoom.devices[i];
-        
-        var statusClass = device.is_online ? '' : 'offline';
-        var lastSeenText = device.last_seen_at ? 
-            'Laatste update: ' + getTimeAgo(new Date(device.last_seen_at)) : 
-            'Nog geen data';
-        
-        var sensorsHtml = '';
-        if (device.sensors) {
-            for (var j = 0; j < device.sensors.length; j++) {
-                var sensor = device.sensors[j];
-                var sensorValue = sensor.latest_value !== null ? sensor.latest_value : '--';
-                var sensorUnit = sensor.unit || '';
-                
-                sensorsHtml += 
-                    '<div class="sensor-card">' +
-                        '<div class="sensor-label">' + getSensorTypeName(sensor.type) + '</div>' +
-                        '<div class="sensor-value">' + sensorValue + 
-                            '<span class="sensor-unit">' + sensorUnit + '</span>' +
-                        '</div>' +
-                    '</div>';
-            }
-        }
-        
-        html += 
-            '<div class="device-card">' +
-                '<div class="device-header">' +
-                    '<div>' +
-                        '<div class="device-name">' + (device.name || 'Device') + '</div>' +
-                        '<div class="device-last-seen">' +
-                            '<span class="status-dot ' + statusClass + '" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span>' +
-                            lastSeenText +
-                        '</div>' +
-                    '</div>' +
-                    '<div style="display:flex;gap:8px;align-items:center;">' +
-                        '<span class="device-eui">' + device.dev_eui + '</span>' +
-                        '<button class="btn btn-danger btn-sm" onclick="unassignDevice(\'' + device.dev_eui + '\')">Ontkoppelen</button>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="sensors-grid">' + sensorsHtml + '</div>' +
-            '</div>';
-    }
-    
-    devicesContainer.innerHTML = html;
-}
-
-function loadUnassignedDevices() {
-    api('/api/devices?unassigned=1')
-        .then(function(devices) {
-            unassignedDevices = devices;
-            renderDeviceSelect();
-        })
-        .catch(function(error) {
-            console.error('Fout bij laden devices:', error);
-        });
-}
-
-function renderDeviceSelect() {
-    var html = '<option value="">-- Selecteer een device --</option>';
-    
-    for (var i = 0; i < unassignedDevices.length; i++) {
-        var device = unassignedDevices[i];
-        var deviceName = device.name || 'Device ' + device.dev_eui.slice(-4);
-        html += '<option value="' + device.dev_eui + '">' + deviceName + ' (' + device.dev_eui.slice(-8) + ')</option>';
-    }
-    
-    deviceSelect.innerHTML = html;
-    
-    var addSection = document.getElementById('add-device-section');
-    if (unassignedDevices.length === 0) {
-        addSection.style.display = 'none';
-    } else {
-        addSection.style.display = 'flex';
-    }
-}
-
-function assignSelectedDevice() {
-    var selectedDevEui = deviceSelect.value;
-    
-    if (!selectedDevEui) {
-        showToast('Selecteer eerst een device', true);
-        return;
-    }
-    
-    api('/api/devices/' + selectedDevEui + '/room', {
-        method: 'PUT',
-        body: JSON.stringify({ room_id: currentRoomId })
-    })
-    .then(function() {
-        showToast('Device toegevoegd aan kamer');
-        openRoom(currentRoomId);
-    })
-    .catch(function(error) {
-        showToast('Fout bij toevoegen device', true);
-    });
-}
-
-function unassignDevice(devEui) {
-    if (!confirm('Weet je zeker dat je dit device wilt ontkoppelen van deze kamer?')) {
-        return;
-    }
-    
-    api('/api/devices/' + devEui + '/room', {
-        method: 'PUT',
-        body: JSON.stringify({ room_id: null })
-    })
-    .then(function() {
-        showToast('Device ontkoppeld van kamer');
-        openRoom(currentRoomId);
-        loadRooms();
-    })
-    .catch(function(error) {
-        showToast('Fout bij ontkoppelen device', true);
-    });
-}
-
-function getSensorTypeName(type) {
-    if (sensorTypes[type]) {
-        return sensorTypes[type].name;
-    }
-    return type;
-}
-
-function getTimeAgo(date) {
-    var now = Date.now();
-    var diffMs = now - date.getTime();
-    var diffMins = Math.floor(diffMs / 60000);
-    var diffHours = Math.floor(diffMs / 3600000);
-    var diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 1) return 'Zojuist';
-    if (diffMins < 60) return diffMins + ' min geleden';
-    if (diffHours < 24) return diffHours + ' uur geleden';
-    return diffDays + ' dagen geleden';
-}
-
-document.getElementById('btn-back').addEventListener('click', function() {
-    currentRoomId = null;
-    currentRoom = null;
-    showPage('dashboard');
-    loadRooms();
-    
-    for (var i = 0; i < navLinks.length; i++) {
-        navLinks[i].classList.remove('active');
-        if (navLinks[i].dataset.page === 'dashboard') {
-            navLinks[i].classList.add('active');
-        }
-    }
-});
-
-// ============================================
-// MODAL FUNCTIES
-// ============================================
-function openAddRoomModal() {
-    editMode = false;
-    document.getElementById('modal-title').textContent = 'Nieuwe kamer toevoegen';
-    document.getElementById('room-name-input').value = '';
-    roomModal.classList.add('active');
-}
-
-function openEditRoomModal() {
-    if (currentRoom) {
-        openEditRoomModalFor(currentRoom.room_id);
-    }
-}
-
-function openEditRoomModalFor(roomId) {
-    var room = null;
-    for (var i = 0; i < rooms.length; i++) {
-        if (rooms[i].room_id === roomId) {
-            room = rooms[i];
-            break;
-        }
-    }
-    if (!room) return;
-    
-    editMode = true;
-    currentRoomId = roomId;
-    document.getElementById('modal-title').textContent = 'Kamer bewerken';
-    document.getElementById('room-name-input').value = room.name;
-    roomModal.classList.add('active');
-}
-
-function closeModal() {
-    roomModal.classList.remove('active');
-}
-
-function saveRoom() {
-    var name = document.getElementById('room-name-input').value.trim();
-    
-    if (!name) {
-        showToast('Vul een kamernaam in', true);
-        return;
-    }
-
-    var options = {
-        method: editMode ? 'PUT' : 'POST',
-        body: JSON.stringify({ name: name })
-    };
-    
-    var endpoint = editMode ? '/api/rooms/' + currentRoomId : '/api/rooms';
-    
-    api(endpoint, options)
-        .then(function() {
-            showToast('Kamer ' + name + (editMode ? ' bijgewerkt' : ' aangemaakt'));
-            closeModal();
-            loadRooms();
-            if (currentRoomId && editMode) {
-                openRoom(currentRoomId);
-            }
-        })
-        .catch(function(error) {
-            showToast('Fout bij opslaan', true);
-        });
-}
-
-function confirmDeleteRoom() {
-    if (currentRoom) confirmDeleteRoomFor(currentRoom.room_id);
-}
-
-function confirmDeleteRoomFor(roomId) {
-    var room = null;
-    for (var i = 0; i < rooms.length; i++) {
-        if (rooms[i].room_id === roomId) {
-            room = rooms[i];
-            break;
-        }
-    }
-    if (!room) return;
-    
-    currentRoomId = roomId;
-    document.getElementById('delete-room-name').textContent = room.name;
-    deleteModal.classList.add('active');
-}
-
-function closeDeleteModal() {
-    deleteModal.classList.remove('active');
-}
-
-function deleteRoom() {
-    if (!currentRoomId) return;
-    
-    api('/api/rooms/' + currentRoomId, { method: 'DELETE' })
-        .then(function() {
-            closeDeleteModal();
-            showToast('Kamer verwijderd');
-            currentRoomId = null;
-            currentRoom = null;
-            showPage('dashboard');
-            
-            for (var i = 0; i < navLinks.length; i++) {
-                navLinks[i].classList.remove('active');
-                if (navLinks[i].dataset.page === 'dashboard') {
-                    navLinks[i].classList.add('active');
-                }
-            }
-            loadRooms();
-        })
-        .catch(function() {
-            showToast('Fout bij verwijderen', true);
-        });
-}
-
-roomModal.addEventListener('click', function(e) {
-    if (e.target === roomModal) closeModal();
-});
-deleteModal.addEventListener('click', function(e) {
-    if (e.target === deleteModal) closeDeleteModal();
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeModal();
-        closeDeleteModal();
-    }
-});
-
-// ============================================
-// HISTORIE EN GRAFIEKEN
-// ============================================
-function loadSensorTypeFilter() {
-    var filterSensor = document.getElementById('filter-sensor');
-    var html = '<option value="">Alle sensoren</option>';
-    
-    var types = Object.keys(sensorTypes);
-    for (var i = 0; i < types.length; i++) {
-        var type = types[i];
-        html += '<option value="' + type + '">' + sensorTypes[type].name + '</option>';
-    }
-    
-    filterSensor.innerHTML = html;
-}
-
-function loadHistory() {
-    var roomFilter = document.getElementById('filter-room').value;
-    var sensorFilter = document.getElementById('filter-sensor').value;
-    var queryString = '?limit=100';
-    
-    if (roomFilter) {
-        queryString += '&room_id=' + roomFilter;
-    }
-    if (sensorFilter) {
-        queryString += '&sensor_type=' + sensorFilter;
-    }
-
-    api('/api/measurements' + queryString)
-        .then(function(measurements) {
-            renderHistory(measurements);
-        })
-        .catch(function() {
-            historyTbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Kon data niet laden</td></tr>';
-        });
-}
-
-function renderHistory(measurements) {
-    if (measurements.length === 0) {
-        historyTbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Geen metingen gevonden</td></tr>';
-        return;
-    }
-    
-    var html = '';
-    
-    for (var i = 0; i < measurements.length; i++) {
-        var m = measurements[i];
-        var dateStr = formatDateTime(new Date(m.measured_at));
-        var roomName = m.room_name || '-';
-        var deviceId = m.dev_eui ? m.dev_eui.slice(-8) : '-';
-        var sensorType = getSensorTypeName(m.sensor_type);
-        var value = m.value + ' ' + (m.unit || '');
-        
-        html += 
-            '<tr>' +
-                '<td>' + dateStr + '</td>' +
-                '<td>' + roomName + '</td>' +
-                '<td><code>' + deviceId + '</code></td>' +
-                '<td>' + sensorType + '</td>' +
-                '<td class="value-cell">' + value + '</td>' +
-            '</tr>';
-    }
-    
-    historyTbody.innerHTML = html;
-}
-
-function formatDateTime(date) {
-    var day = ('0' + date.getDate()).slice(-2);
-    var month = ('0' + (date.getMonth() + 1)).slice(-2);
-    var year = date.getFullYear();
-    var hours = ('0' + date.getHours()).slice(-2);
-    var minutes = ('0' + date.getMinutes()).slice(-2);
-    
-    return day + '-' + month + '-' + year + ' ' + hours + ':' + minutes;
-}
-
-function updateRoomFilter() {
-    var select = document.getElementById('filter-room');
-    var html = '<option value="">Alle kamers</option>';
-    
-    for (var i = 0; i < rooms.length; i++) {
-        html += '<option value="' + rooms[i].room_id + '">' + rooms[i].name + '</option>';
-    }
-    
-    select.innerHTML = html;
-}
-
-// ============================================
-// GRAFIEKEN - ALLE 6 SENSOR TYPES
-// ============================================
-function initAllCharts() {
-    // Destroy existing charts
-    var chartKeys = Object.keys(charts);
-    for (var i = 0; i < chartKeys.length; i++) {
-        if (charts[chartKeys[i]]) {
-            charts[chartKeys[i]].destroy();
-        }
-    }
-    charts = {};
-    
-    var roomFilter = document.getElementById('filter-room').value;
-    var sensorFilter = document.getElementById('filter-sensor').value;
-    var queryString = '?';
-    
-    if (roomFilter) {
-        queryString += 'room_id=' + roomFilter + '&';
-    }
-    if (sensorFilter) {
-        queryString += 'sensor_type=' + sensorFilter;
-    }
-    
-    api('/api/measurements/chart' + queryString)
-        .then(function(chartData) {
-            renderAllCharts(chartData, sensorFilter);
-        })
-        .catch(function(error) {
-            console.error('Grafiek data laden mislukt:', error);
-            chartsContainer.innerHTML = '<div class="empty-state">Kon grafiekdata niet laden</div>';
-        });
-}
-
-function renderAllCharts(chartData, filterType) {
-    // Groepeer data per sensor type
-    var dataByType = {};
-    var allHours = [];
-    
-    for (var i = 0; i < chartData.length; i++) {
-        var d = chartData[i];
-        var type = d.sensor_type;
-        
-        if (!dataByType[type]) {
-            dataByType[type] = {};
-        }
-        
-        var deviceKey = d.device_name || d.dev_eui.slice(-8);
-        if (!dataByType[type][deviceKey]) {
-            dataByType[type][deviceKey] = {};
-        }
-        
-        dataByType[type][deviceKey][d.hour] = parseFloat(d.avg_value);
-        
-        if (allHours.indexOf(d.hour) === -1) {
-            allHours.push(d.hour);
-        }
-    }
-    
-    // Sorteer uren
-    allHours.sort();
-    
-    // Bepaal welke types te tonen
-    var typesToShow = filterType ? [filterType] : Object.keys(sensorTypes);
-    
-    // Bouw HTML voor alle grafieken
-    var html = '';
-    
-    for (var t = 0; t < typesToShow.length; t++) {
-        var type = typesToShow[t];
-        var typeInfo = sensorTypes[type] || { name: type, unit: '' };
-        var hasData = dataByType[type] && Object.keys(dataByType[type]).length > 0;
-        
-        html += 
-            '<div class="chart-card">' +
-                '<div class="chart-header">' +
-                    '<div>' +
-                        '<span class="chart-title">' + typeInfo.name + ' (' + typeInfo.unit + ')</span>' +
-                        '<div class="chart-subtitle">Gemiddelde per uur, per device</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="chart-container">' +
-                    (hasData ? '<canvas id="chart-' + type + '"></canvas>' : '<div class="chart-empty">Geen data beschikbaar</div>') +
-                '</div>' +
-            '</div>';
-    }
-    
-    chartsContainer.innerHTML = html;
-    
-    // Render elke grafiek
-    for (var t = 0; t < typesToShow.length; t++) {
-        var type = typesToShow[t];
-        
-        if (!dataByType[type] || Object.keys(dataByType[type]).length === 0) {
-            continue;
-        }
-        
-        var canvas = document.getElementById('chart-' + type);
-        if (!canvas) continue;
-        
-        var typeInfo = sensorTypes[type] || { name: type, unit: '', color: '#666' };
-        var devices = Object.keys(dataByType[type]);
-        var datasets = [];
-        
-        for (var d = 0; d < devices.length; d++) {
-            var deviceName = devices[d];
-            var dataPoints = [];
-            
-            for (var h = 0; h < allHours.length; h++) {
-                var value = dataByType[type][deviceName][allHours[h]];
-                dataPoints.push(value !== undefined ? value : null);
-            }
-            
-            datasets.push({
-                label: deviceName,
-                data: dataPoints,
-                borderColor: deviceColors[d % deviceColors.length],
-                backgroundColor: deviceColors[d % deviceColors.length] + '20',
-                fill: false,
-                tension: 0.3,
-                pointRadius: 3,
-                pointStyle: d === 0 ? 'circle' : d === 1 ? 'rect' : 'triangle',
-                borderWidth: 2,
-                borderDash: d === 1 ? [5, 5] : [],
-                spanGaps: true
-            });
-        }
-        
-        // Format labels (alleen uur:minuut tonen)
-        var labels = [];
-        for (var h = 0; h < allHours.length; h++) {
-            var hourDate = new Date(allHours[h]);
-            var dayName = hourDate.toLocaleDateString('nl-NL', { weekday: 'short' });
-            var hourStr = ('0' + hourDate.getHours()).slice(-2) + ':00';
-            labels.push(dayName + ' ' + hourStr);
-        }
-        
-        charts[type] = new Chart(canvas, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { boxWidth: 12 }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45,
-                            maxTicksLimit: 12
-                        }
-                    },
-                    y: {
-                        beginAtZero: type === 'presence' || type === 'light'
-                    }
-                }
-            }
-        });
-    }
-}
-
-document.getElementById('btn-filter').addEventListener('click', function() {
-    loadHistory();
-    initAllCharts();
-    showToast('Filter toegepast');
-});
-
-// ============================================
-// START DE APPLICATIE
-// ============================================
-loadRooms();
-    </script>
+    <!-- ============================================
+         JAVASCRIPT BESTANDEN
+         De volgorde is belangrijk: eerst de classes laden,
+         dan app.js die alles opstart
+         ============================================ -->
+    <script src="js/ApiService.js"></script>     <!-- Class voor API communicatie -->
+    <script src="js/RoomManager.js"></script>    <!-- Class voor kamer beheer -->
+    <script src="js/ChartManager.js"></script>   <!-- Class voor grafieken -->
+    <script src="js/app.js"></script>            <!-- Hoofdbestand dat alles opstart -->
 </body>
 </html>
