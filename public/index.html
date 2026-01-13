@@ -1149,7 +1149,11 @@ function renderAllCharts(chartData, filterType) {
                 backgroundColor: deviceColors[d % deviceColors.length] + '20',
                 fill: false,
                 tension: 0.3,
-                pointRadius: 2
+                pointRadius: 3,
+                pointStyle: d === 0 ? 'circle' : d === 1 ? 'rect' : 'triangle',
+                borderWidth: 2,
+                borderDash: d === 1 ? [5, 5] : [],
+                spanGaps: true
             });
         }
         

@@ -405,6 +405,7 @@ app.get('/api/measurements/chart', async (req, res) => {
         // Laatste 4 dagen
         const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000);
 
+        // Filter CO2 waarden > 5000 ppm (sensor errors - fysiek onmogelijk)
         let query = `
             SELECT 
                 d.name as device_name,
@@ -421,6 +422,7 @@ app.get('/api/measurements/chart', async (req, res) => {
             JOIN devices d ON m.dev_eui = d.dev_eui
             LEFT JOIN rooms r ON d.room_id = r.room_id
             WHERE m.measured_at >= ?
+            AND NOT (s.type = 'co2' AND m.value > 5000)
         `;
         const params = [fourDaysAgo];
 
