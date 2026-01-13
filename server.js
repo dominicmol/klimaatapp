@@ -11,7 +11,9 @@
  * - GET  /api/devices            - Alle devices (optioneel: ?unassigned=1)
  * - PUT  /api/devices/:dev_eui/room - Device aan kamer koppelen/ontkoppelen
  * - GET  /api/measurements       - Historische metingen (met filters)
+ * - GET  /api/measurements/chart - Data voor grafieken (per uur)
  * - POST /api/webhook/ttn        - TTN Webhook ontvanger
+ * - DELETE /api/measurements/cleanup - Verwijder oude data (ouder dan 4 dagen)
  */
 
 require('dotenv').config();
@@ -48,6 +50,45 @@ async function testConnection() {
         console.error('[ERROR] Database connection failed:', error.message);
     }
 }
+
+// ============================================
+// DATA CLEANUP - Verwijder data ouder dan 4 dagen
+// ============================================
+
+// Cleanup functie - wordt aangeroepen bij elke webhook EN kan handmatig
+async function cleanupOldData() {
+    try {
+        const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000);
+        
+        const [result] = await pool.query(
+            'DELETE FROM measurements WHERE measured_at < ?',
+            [fourDaysAgo]
+        );
+        
+        if (result.affectedRows > 0) {
+            console.log('[CLEANUP] Deleted', result.affectedRows, 'old measurements');
+        }
+        
+        return result.affectedRows;
+    } catch (error) {
+        console.error('[ERROR] Cleanup failed:', error.message);
+        return 0;
+    }
+}
+
+// Handmatige cleanup endpoint
+app.delete('/api/measurements/cleanup', async (req, res) => {
+    try {
+        const deleted = await cleanupOldData();
+        res.json({ 
+            success: true, 
+            message: 'Cleanup completed',
+            deleted_rows: deleted
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Cleanup failed' });
+    }
+});
 
 // ============================================
 // API ROUTES - ROOMS
@@ -308,10 +349,13 @@ app.put('/api/devices/:dev_eui/room', async (req, res) => {
 // API ROUTES - MEASUREMENTS
 // ============================================
 
-// GET /api/measurements - Historische metingen met filters
+// GET /api/measurements - Historische metingen met filters (max 4 dagen)
 app.get('/api/measurements', async (req, res) => {
     try {
-        const { room_id, sensor_type, period, limit = 100 } = req.query;
+        const { room_id, sensor_type, limit = 100 } = req.query;
+        
+        // Alleen data van laatste 4 dagen
+        const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000);
         
         let query = `
             SELECT 
@@ -328,9 +372,9 @@ app.get('/api/measurements', async (req, res) => {
             JOIN sensors s ON m.dev_eui = s.dev_eui AND m.channel = s.channel
             JOIN devices d ON m.dev_eui = d.dev_eui
             LEFT JOIN rooms r ON d.room_id = r.room_id
-            WHERE 1=1
+            WHERE m.measured_at >= ?
         `;
-        const params = [];
+        const params = [fourDaysAgo];
 
         if (room_id) {
             query += ' AND r.room_id = ?';
@@ -340,26 +384,6 @@ app.get('/api/measurements', async (req, res) => {
         if (sensor_type) {
             query += ' AND s.type = ?';
             params.push(sensor_type);
-        }
-
-        if (period) {
-            const now = new Date();
-            let startDate;
-            switch (period) {
-                case 'today':
-                    startDate = new Date(now.setHours(0, 0, 0, 0));
-                    break;
-                case 'week':
-                    startDate = new Date(now.setDate(now.getDate() - 7));
-                    break;
-                case 'month':
-                    startDate = new Date(now.setMonth(now.getMonth() - 1));
-                    break;
-            }
-            if (startDate) {
-                query += ' AND m.measured_at >= ?';
-                params.push(startDate);
-            }
         }
 
         query += ' ORDER BY m.measured_at DESC LIMIT ?';
@@ -373,49 +397,32 @@ app.get('/api/measurements', async (req, res) => {
     }
 });
 
-// GET /api/measurements/chart - Data voor grafieken
+// GET /api/measurements/chart - Data voor grafieken (per UUR, per device)
 app.get('/api/measurements/chart', async (req, res) => {
     try {
-        const { room_id, sensor_type, period = 'week' } = req.query;
+        const { room_id, sensor_type } = req.query;
         
-        // Bepaal tijdsperiode
-        const now = new Date();
-        let startDate;
-        let groupBy;
-        
-        switch (period) {
-            case 'today':
-                startDate = new Date(now.setHours(0, 0, 0, 0));
-                groupBy = 'HOUR(m.measured_at)';
-                break;
-            case 'week':
-                startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                groupBy = 'DATE(m.measured_at)';
-                break;
-            case 'month':
-                startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-                groupBy = 'DATE(m.measured_at)';
-                break;
-            default:
-                startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                groupBy = 'DATE(m.measured_at)';
-        }
+        // Laatste 4 dagen
+        const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000);
 
         let query = `
             SELECT 
-                r.name as room_name,
+                d.name as device_name,
+                d.dev_eui,
                 s.type as sensor_type,
-                DATE(m.measured_at) as date,
+                s.unit,
+                DATE_FORMAT(m.measured_at, '%Y-%m-%d %H:00:00') as hour,
                 AVG(m.value) as avg_value,
                 MIN(m.value) as min_value,
-                MAX(m.value) as max_value
+                MAX(m.value) as max_value,
+                COUNT(*) as measurement_count
             FROM measurements m
             JOIN sensors s ON m.dev_eui = s.dev_eui AND m.channel = s.channel
             JOIN devices d ON m.dev_eui = d.dev_eui
-            JOIN rooms r ON d.room_id = r.room_id
+            LEFT JOIN rooms r ON d.room_id = r.room_id
             WHERE m.measured_at >= ?
         `;
-        const params = [startDate];
+        const params = [fourDaysAgo];
 
         if (room_id) {
             query += ' AND r.room_id = ?';
@@ -427,12 +434,28 @@ app.get('/api/measurements/chart', async (req, res) => {
             params.push(sensor_type);
         }
 
-        query += ` GROUP BY r.room_id, s.type, ${groupBy} ORDER BY date ASC`;
+        query += ` GROUP BY d.dev_eui, s.type, hour ORDER BY hour ASC, d.name`;
 
         const [data] = await pool.query(query, params);
         res.json(data);
     } catch (error) {
         console.error('Error fetching chart data:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// GET /api/sensor-types - Beschikbare sensor types ophalen
+app.get('/api/sensor-types', async (req, res) => {
+    try {
+        const [types] = await pool.query(`
+            SELECT DISTINCT type, unit 
+            FROM sensors 
+            WHERE type IS NOT NULL AND type != 'unknown'
+            ORDER BY type
+        `);
+        res.json(types);
+    } catch (error) {
+        console.error('Error fetching sensor types:', error);
         res.status(500).json({ error: 'Database error' });
     }
 });
@@ -445,6 +468,9 @@ app.get('/api/measurements/chart', async (req, res) => {
 app.post('/api/webhook/ttn', async (req, res) => {
     try {
         console.log('[WEBHOOK] TTN data received');
+        
+        // Cleanup oude data bij elke webhook (efficiënt)
+        cleanupOldData();
         
         const payload = req.body;
         
@@ -568,4 +594,7 @@ app.use(express.static('public'));
 app.listen(PORT, async () => {
     console.log('Klimaatapp server running on port', PORT);
     await testConnection();
+    
+    // Initial cleanup bij opstarten
+    cleanupOldData();
 });

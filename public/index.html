@@ -78,7 +78,7 @@ body {
 .main-content {
     flex: 1;
     padding: var(--spacing-lg);
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     width: 100%;
 }
@@ -159,7 +159,6 @@ body {
 .add-room-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--coral); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
 .add-room-text { color: var(--text-muted); font-weight: 500; }
 
-/* Device toevoegen sectie */
 .add-device-section {
     background: var(--white);
     border-radius: var(--radius-lg);
@@ -208,15 +207,17 @@ body {
 .history-filters { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); align-items: flex-end; margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
 .filter-group { display: flex; flex-direction: column; gap: 6px; }
 .filter-group label { font-size: 0.8rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; }
-.filter-select { padding: var(--spacing-xs) var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.95rem; color: var(--text-dark); background: var(--white); min-width: 200px; cursor: pointer; }
+.filter-select { padding: var(--spacing-xs) var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.95rem; color: var(--text-dark); background: var(--white); min-width: 150px; cursor: pointer; }
 .filter-select:focus { border-color: var(--forest-green); outline: none; }
 
 .charts-section { margin-bottom: var(--spacing-lg); }
-.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: var(--spacing-md); }
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: var(--spacing-md); }
 .chart-card { background: var(--white); border-radius: var(--radius-lg); padding: var(--spacing-md); box-shadow: var(--shadow-sm); }
 .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm); }
 .chart-title { font-size: 1rem; font-weight: 600; color: var(--forest-green); }
-.chart-container { position: relative; height: 250px; }
+.chart-subtitle { font-size: 0.8rem; color: var(--text-muted); }
+.chart-container { position: relative; height: 220px; }
+.chart-empty { display: flex; align-items: center; justify-content: center; height: 220px; color: var(--text-muted); font-style: italic; }
 
 .history-section-title { font-size: 1.2rem; font-weight: 600; color: var(--forest-green); margin-bottom: var(--spacing-sm); }
 .history-table-container { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; overflow-x: auto; }
@@ -225,6 +226,8 @@ body {
 .history-table td { padding: var(--spacing-sm) var(--spacing-md); border-bottom: 1px solid var(--beige-dark); font-size: 0.95rem; }
 .history-table tbody tr:hover { background: var(--beige); }
 .value-cell { font-weight: 600; color: var(--forest-green); }
+
+.data-info { background: var(--beige-dark); padding: var(--spacing-sm); border-radius: var(--radius-sm); margin-bottom: var(--spacing-md); font-size: 0.85rem; color: var(--text-muted); }
 
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all var(--transition-normal); }
 .modal-overlay.active { opacity: 1; visibility: visible; }
@@ -309,7 +312,6 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
                 </div>
             </div>
             
-            <!-- Device toevoegen sectie -->
             <div class="add-device-section" id="add-device-section">
                 <label for="device-select">Device toevoegen:</label>
                 <select id="device-select" class="device-select">
@@ -325,39 +327,34 @@ code { font-family: 'Consolas', monospace; background: var(--beige); padding: 2p
         <section id="history-page" class="page">
             <div class="page-header">
                 <h1>Meetgeschiedenis</h1>
-                <p class="subtitle">Bekijk historische klimaatdata en trends</p>
+                <p class="subtitle">Bekijk historische klimaatdata en trends (laatste 4 dagen, per uur gemiddeld)</p>
             </div>
 
-            <!-- Filter op kamer -->
+            <div class="data-info">
+                Data wordt automatisch verwijderd na 4 dagen. Grafieken tonen gemiddelde waarden per uur, per device.
+            </div>
+
+            <!-- Filters -->
             <div class="history-filters">
                 <div class="filter-group">
-                    <label for="filter-room">Filter op kamer</label>
+                    <label for="filter-room">Kamer</label>
                     <select id="filter-room" class="filter-select">
                         <option value="">Alle kamers</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-sensor">Sensor type</label>
+                    <select id="filter-sensor" class="filter-select">
+                        <option value="">Alle sensoren</option>
                     </select>
                 </div>
                 <button class="btn btn-primary" id="btn-filter">Filteren</button>
             </div>
 
-            <!-- Grafieken -->
+            <!-- Grafieken voor alle 6 sensor types -->
             <div class="charts-section">
-                <div class="charts-grid">
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <span class="chart-title">Temperatuur (graden Celsius)</span>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="tempChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <span class="chart-title">Luchtvochtigheid (procent)</span>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="humidityChart"></canvas>
-                        </div>
-                    </div>
+                <div class="charts-grid" id="charts-container">
+                    <!-- Charts worden dynamisch gegenereerd -->
                 </div>
             </div>
 
@@ -442,6 +439,22 @@ var charts = {};
 var rooms = [];
 var unassignedDevices = [];
 
+// Alle sensor types met Nederlandse namen en kleuren
+var sensorTypes = {
+    'temperature': { name: 'Temperatuur', unit: 'C', color: '#E07B67' },
+    'humidity': { name: 'Luchtvochtigheid', unit: '%', color: '#2D5A3D' },
+    'presence': { name: 'Aanwezigheid', unit: '%', color: '#6B7B6C' },
+    'co2': { name: 'CO2', unit: 'ppm', color: '#8B4513' },
+    'light': { name: 'Lichtsterkte', unit: '%', color: '#FFD700' },
+    'noise': { name: 'Ruis', unit: 'dB', color: '#4169E1' }
+};
+
+// Kleuren voor verschillende devices
+var deviceColors = [
+    '#2D5A3D', '#E07B67', '#4169E1', '#FFD700', '#8B4513', '#6B7B6C',
+    '#FF6347', '#20B2AA', '#9370DB', '#3CB371'
+];
+
 // ============================================
 // API FUNCTIE
 // ============================================
@@ -477,6 +490,7 @@ var roomModal = document.getElementById('room-modal');
 var deleteModal = document.getElementById('delete-modal');
 var toast = document.getElementById('toast');
 var deviceSelect = document.getElementById('device-select');
+var chartsContainer = document.getElementById('charts-container');
 
 // ============================================
 // NAVIGATIE
@@ -504,7 +518,8 @@ function showPage(pageName) {
     
     if (pageName === 'history') {
         loadHistory();
-        setTimeout(initCharts, 100);
+        loadSensorTypeFilter();
+        setTimeout(initAllCharts, 100);
     }
 }
 
@@ -624,7 +639,6 @@ function openRoom(roomId) {
         navLinks[i].classList.remove('active');
     }
 
-    // Laad kamer data en ontkoppelde devices
     api('/api/rooms/' + roomId)
         .then(function(data) {
             currentRoom = data;
@@ -642,7 +656,6 @@ function openRoom(roomId) {
         });
 }
 
-// Render devices in de kamer
 function renderDevices() {
     if (!currentRoom.devices || currentRoom.devices.length === 0) {
         devicesContainer.innerHTML = '<div class="empty-state"><p>Geen devices gekoppeld aan deze kamer. Gebruik de dropdown hierboven om een device toe te voegen.</p></div>';
@@ -698,7 +711,6 @@ function renderDevices() {
     devicesContainer.innerHTML = html;
 }
 
-// Laad devices die nog niet aan een kamer gekoppeld zijn
 function loadUnassignedDevices() {
     api('/api/devices?unassigned=1')
         .then(function(devices) {
@@ -710,7 +722,6 @@ function loadUnassignedDevices() {
         });
 }
 
-// Render de device dropdown
 function renderDeviceSelect() {
     var html = '<option value="">-- Selecteer een device --</option>';
     
@@ -722,7 +733,6 @@ function renderDeviceSelect() {
     
     deviceSelect.innerHTML = html;
     
-    // Toon/verberg sectie afhankelijk van beschikbare devices
     var addSection = document.getElementById('add-device-section');
     if (unassignedDevices.length === 0) {
         addSection.style.display = 'none';
@@ -731,7 +741,6 @@ function renderDeviceSelect() {
     }
 }
 
-// Koppel geselecteerd device aan huidige kamer
 function assignSelectedDevice() {
     var selectedDevEui = deviceSelect.value;
     
@@ -746,14 +755,13 @@ function assignSelectedDevice() {
     })
     .then(function() {
         showToast('Device toegevoegd aan kamer');
-        openRoom(currentRoomId); // Herlaad de kamer
+        openRoom(currentRoomId);
     })
     .catch(function(error) {
         showToast('Fout bij toevoegen device', true);
     });
 }
 
-// Ontkoppel device van kamer
 function unassignDevice(devEui) {
     if (!confirm('Weet je zeker dat je dit device wilt ontkoppelen van deze kamer?')) {
         return;
@@ -765,29 +773,21 @@ function unassignDevice(devEui) {
     })
     .then(function() {
         showToast('Device ontkoppeld van kamer');
-        openRoom(currentRoomId); // Herlaad de kamer
-        loadRooms(); // Update ook het dashboard
+        openRoom(currentRoomId);
+        loadRooms();
     })
     .catch(function(error) {
         showToast('Fout bij ontkoppelen device', true);
     });
 }
 
-// Hulpfunctie: sensor type naar Nederlandse naam
 function getSensorTypeName(type) {
-    var names = {
-        'temperature': 'Temperatuur',
-        'humidity': 'Luchtvochtigheid',
-        'pressure': 'Luchtdruk',
-        'light': 'Lichtsterkte',
-        'presence': 'Aanwezigheid',
-        'co2': 'CO2',
-        'noise': 'Ruis'
-    };
-    return names[type] || type;
+    if (sensorTypes[type]) {
+        return sensorTypes[type].name;
+    }
+    return type;
 }
 
-// Hulpfunctie: tijd geleden berekenen
 function getTimeAgo(date) {
     var now = Date.now();
     var diffMs = now - date.getTime();
@@ -801,12 +801,11 @@ function getTimeAgo(date) {
     return diffDays + ' dagen geleden';
 }
 
-// Terug knop
 document.getElementById('btn-back').addEventListener('click', function() {
     currentRoomId = null;
     currentRoom = null;
     showPage('dashboard');
-    loadRooms(); // Herlaad kamers om device counts te updaten
+    loadRooms();
     
     for (var i = 0; i < navLinks.length; i++) {
         navLinks[i].classList.remove('active');
@@ -946,12 +945,29 @@ document.addEventListener('keydown', function(e) {
 // ============================================
 // HISTORIE EN GRAFIEKEN
 // ============================================
+function loadSensorTypeFilter() {
+    var filterSensor = document.getElementById('filter-sensor');
+    var html = '<option value="">Alle sensoren</option>';
+    
+    var types = Object.keys(sensorTypes);
+    for (var i = 0; i < types.length; i++) {
+        var type = types[i];
+        html += '<option value="' + type + '">' + sensorTypes[type].name + '</option>';
+    }
+    
+    filterSensor.innerHTML = html;
+}
+
 function loadHistory() {
     var roomFilter = document.getElementById('filter-room').value;
+    var sensorFilter = document.getElementById('filter-sensor').value;
     var queryString = '?limit=100';
     
     if (roomFilter) {
         queryString += '&room_id=' + roomFilter;
+    }
+    if (sensorFilter) {
+        queryString += '&sensor_type=' + sensorFilter;
     }
 
     api('/api/measurements' + queryString)
@@ -1013,121 +1029,174 @@ function updateRoomFilter() {
     select.innerHTML = html;
 }
 
-function initCharts() {
-    if (charts.temp) charts.temp.destroy();
-    if (charts.humidity) charts.humidity.destroy();
+// ============================================
+// GRAFIEKEN - ALLE 6 SENSOR TYPES
+// ============================================
+function initAllCharts() {
+    // Destroy existing charts
+    var chartKeys = Object.keys(charts);
+    for (var i = 0; i < chartKeys.length; i++) {
+        if (charts[chartKeys[i]]) {
+            charts[chartKeys[i]].destroy();
+        }
+    }
+    charts = {};
     
     var roomFilter = document.getElementById('filter-room').value;
-    var queryString = '?period=week';
+    var sensorFilter = document.getElementById('filter-sensor').value;
+    var queryString = '?';
     
     if (roomFilter) {
-        queryString += '&room_id=' + roomFilter;
+        queryString += 'room_id=' + roomFilter + '&';
+    }
+    if (sensorFilter) {
+        queryString += 'sensor_type=' + sensorFilter;
     }
     
     api('/api/measurements/chart' + queryString)
         .then(function(chartData) {
-            var tempData = {};
-            var humidityData = {};
-            var allDates = [];
-            
-            for (var i = 0; i < chartData.length; i++) {
-                var d = chartData[i];
-                
-                if (allDates.indexOf(d.date) === -1) {
-                    allDates.push(d.date);
-                }
-                
-                if (d.sensor_type === 'temperature') {
-                    if (!tempData[d.room_name]) tempData[d.room_name] = {};
-                    tempData[d.room_name][d.date] = parseFloat(d.avg_value);
-                }
-                
-                if (d.sensor_type === 'humidity') {
-                    if (!humidityData[d.room_name]) humidityData[d.room_name] = {};
-                    humidityData[d.room_name][d.date] = parseFloat(d.avg_value);
-                }
-            }
-            
-            allDates.sort();
-            
-            var colors = ['#2D5A3D', '#E07B67', '#6B7B6C', '#3A7D4E'];
-            
-            var chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
-            };
-
-            var labels = [];
-            for (var i = 0; i < allDates.length; i++) {
-                var date = new Date(allDates[i]);
-                labels.push(date.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric' }));
-            }
-
-            var tempRooms = Object.keys(tempData);
-            var tempDatasets = [];
-            
-            for (var i = 0; i < tempRooms.length; i++) {
-                var roomName = tempRooms[i];
-                var dataPoints = [];
-                
-                for (var j = 0; j < allDates.length; j++) {
-                    dataPoints.push(tempData[roomName][allDates[j]] || null);
-                }
-                
-                tempDatasets.push({
-                    label: roomName,
-                    data: dataPoints,
-                    borderColor: colors[i % colors.length],
-                    fill: false
-                });
-            }
-
-            if (tempDatasets.length > 0) {
-                charts.temp = new Chart(document.getElementById('tempChart'), {
-                    type: 'line',
-                    data: { labels: labels, datasets: tempDatasets },
-                    options: chartOptions
-                });
-            }
-
-            var humidityRooms = Object.keys(humidityData);
-            var humidityDatasets = [];
-            
-            for (var i = 0; i < humidityRooms.length; i++) {
-                var roomName = humidityRooms[i];
-                var dataPoints = [];
-                
-                for (var j = 0; j < allDates.length; j++) {
-                    dataPoints.push(humidityData[roomName][allDates[j]] || null);
-                }
-                
-                humidityDatasets.push({
-                    label: roomName,
-                    data: dataPoints,
-                    borderColor: colors[i % colors.length],
-                    fill: false
-                });
-            }
-
-            if (humidityDatasets.length > 0) {
-                charts.humidity = new Chart(document.getElementById('humidityChart'), {
-                    type: 'line',
-                    data: { labels: labels, datasets: humidityDatasets },
-                    options: chartOptions
-                });
-            }
+            renderAllCharts(chartData, sensorFilter);
         })
         .catch(function(error) {
             console.error('Grafiek data laden mislukt:', error);
+            chartsContainer.innerHTML = '<div class="empty-state">Kon grafiekdata niet laden</div>';
         });
+}
+
+function renderAllCharts(chartData, filterType) {
+    // Groepeer data per sensor type
+    var dataByType = {};
+    var allHours = [];
+    
+    for (var i = 0; i < chartData.length; i++) {
+        var d = chartData[i];
+        var type = d.sensor_type;
+        
+        if (!dataByType[type]) {
+            dataByType[type] = {};
+        }
+        
+        var deviceKey = d.device_name || d.dev_eui.slice(-8);
+        if (!dataByType[type][deviceKey]) {
+            dataByType[type][deviceKey] = {};
+        }
+        
+        dataByType[type][deviceKey][d.hour] = parseFloat(d.avg_value);
+        
+        if (allHours.indexOf(d.hour) === -1) {
+            allHours.push(d.hour);
+        }
+    }
+    
+    // Sorteer uren
+    allHours.sort();
+    
+    // Bepaal welke types te tonen
+    var typesToShow = filterType ? [filterType] : Object.keys(sensorTypes);
+    
+    // Bouw HTML voor alle grafieken
+    var html = '';
+    
+    for (var t = 0; t < typesToShow.length; t++) {
+        var type = typesToShow[t];
+        var typeInfo = sensorTypes[type] || { name: type, unit: '' };
+        var hasData = dataByType[type] && Object.keys(dataByType[type]).length > 0;
+        
+        html += 
+            '<div class="chart-card">' +
+                '<div class="chart-header">' +
+                    '<div>' +
+                        '<span class="chart-title">' + typeInfo.name + ' (' + typeInfo.unit + ')</span>' +
+                        '<div class="chart-subtitle">Gemiddelde per uur, per device</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="chart-container">' +
+                    (hasData ? '<canvas id="chart-' + type + '"></canvas>' : '<div class="chart-empty">Geen data beschikbaar</div>') +
+                '</div>' +
+            '</div>';
+    }
+    
+    chartsContainer.innerHTML = html;
+    
+    // Render elke grafiek
+    for (var t = 0; t < typesToShow.length; t++) {
+        var type = typesToShow[t];
+        
+        if (!dataByType[type] || Object.keys(dataByType[type]).length === 0) {
+            continue;
+        }
+        
+        var canvas = document.getElementById('chart-' + type);
+        if (!canvas) continue;
+        
+        var typeInfo = sensorTypes[type] || { name: type, unit: '', color: '#666' };
+        var devices = Object.keys(dataByType[type]);
+        var datasets = [];
+        
+        for (var d = 0; d < devices.length; d++) {
+            var deviceName = devices[d];
+            var dataPoints = [];
+            
+            for (var h = 0; h < allHours.length; h++) {
+                var value = dataByType[type][deviceName][allHours[h]];
+                dataPoints.push(value !== undefined ? value : null);
+            }
+            
+            datasets.push({
+                label: deviceName,
+                data: dataPoints,
+                borderColor: deviceColors[d % deviceColors.length],
+                backgroundColor: deviceColors[d % deviceColors.length] + '20',
+                fill: false,
+                tension: 0.3,
+                pointRadius: 2
+            });
+        }
+        
+        // Format labels (alleen uur:minuut tonen)
+        var labels = [];
+        for (var h = 0; h < allHours.length; h++) {
+            var hourDate = new Date(allHours[h]);
+            var dayName = hourDate.toLocaleDateString('nl-NL', { weekday: 'short' });
+            var hourStr = ('0' + hourDate.getHours()).slice(-2) + ':00';
+            labels.push(dayName + ' ' + hourStr);
+        }
+        
+        charts[type] = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12 }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45,
+                            maxTicksLimit: 12
+                        }
+                    },
+                    y: {
+                        beginAtZero: type === 'presence' || type === 'light'
+                    }
+                }
+            }
+        });
+    }
 }
 
 document.getElementById('btn-filter').addEventListener('click', function() {
     loadHistory();
-    initCharts();
+    initAllCharts();
     showToast('Filter toegepast');
 });
 
