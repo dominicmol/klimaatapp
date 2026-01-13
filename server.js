@@ -434,7 +434,7 @@ app.get('/api/measurements/chart', async (req, res) => {
             params.push(sensor_type);
         }
 
-        query += ` GROUP BY d.dev_eui, s.type, hour ORDER BY hour ASC, d.name`;
+        query += ` GROUP BY d.dev_eui, d.name, s.type, s.unit, hour ORDER BY hour ASC, d.name`;
 
         const [data] = await pool.query(query, params);
         res.json(data);
